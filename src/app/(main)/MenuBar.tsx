@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Bell, Bookmark } from "lucide-react";
+import { Bell, Bookmark, Home } from "lucide-react";
 import Link from "next/link";
-import Home from "./page";
 
 interface MenuBarProps {
   className?: string;
