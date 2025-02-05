@@ -8,7 +8,11 @@ import { PostsPage } from "@/lib/types";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
-export default function ForYouFeed() {
+interface UserPostsProps {
+  userId: string;
+}
+
+export default function UserPosts({ userId }: UserPostsProps) {
   const {
     data,
     fetchNextPage,
@@ -17,11 +21,11 @@ export default function ForYouFeed() {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ["post-feed", "for-you"],
+    queryKey: ["post-feed", "user-posts", userId],
     queryFn: ({ pageParam }) =>
       kyInstance
         .get(
-          "/api/posts/for-you",
+          `/api/users/${userId}/posts`,
           pageParam ? { searchParams: { cursor: pageParam } } : {},
         )
         .json<PostsPage>(),
@@ -29,38 +33,37 @@ export default function ForYouFeed() {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 
-  const posts = data?.pages.flatMap((page) => page.posts) ?? [];
+  const posts = data?.pages.flatMap((page) => page.posts) || [];
 
-  if (status == "pending") {
+  if (status === "pending") {
     return <PostsLoadingSkeleton />;
   }
 
-  if (status == "success" && posts.length == 0 && !hasNextPage) {
+  if (status === "success" && !posts.length && !hasNextPage) {
     return (
       <p className="text-center text-muted-foreground">
-        No one has posted anything yet.
+        This user hasn&apos;t posted anything yet.
       </p>
     );
   }
 
-  if (status == "error") {
+  if (status === "error") {
     return (
       <p className="text-center text-destructive">
-        An error occured while loading posts
+        An error occurred while loading posts.
       </p>
     );
   }
+
   return (
     <InfiniteScrollContainer
       className="space-y-5"
-      onBottomReached={() =>
-        hasNextPage && !isFetchingNextPage && fetchNextPage()
-      }
+      onBottomReached={() => hasNextPage && !isFetching && fetchNextPage()}
     >
       {posts.map((post) => (
         <Post key={post.id} post={post} />
-      ))}{" "}
-      {isFetching && <Loader2 className="mx-auto my-3 animate-spin" />}
+      ))}
+      {isFetchingNextPage && <Loader2 className="mx-auto my-3 animate-spin" />}
     </InfiniteScrollContainer>
   );
 }
